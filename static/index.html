@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L'Archiviste</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=MedievalSharp&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════
+   CSS Variables — Baldur's Gate 1 Palette
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --bg-darkest: #0a0806;
+  --bg-dark: #1a1410;
+  --bg-panel: #1e1812;
+  --bg-panel-hover: #2a2018;
+  --stone-dark: #2c2319;
+  --stone-mid: #3d3124;
+  --stone-light: #5a4a38;
+  --gold-dark: #8b6914;
+  --gold: #c9a84c;
+  --gold-bright: #e8cc6e;
+  --gold-glow: #f5dc7a;
+  --parchment: #d4c4a0;
+  --parchment-light: #e8dcc4;
+  --parchment-dark: #b8a882;
+  --text-light: #ddd0b8;
+  --text-dim: #9a8b72;
+  --text-dark: #2c2319;
+  --red-accent: #8b2500;
+  --red-glow: #c43a00;
+  --green-dim: #4a6b3a;
+  --blue-dim: #3a4a6b;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Reset & Base
+   ═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-darkest);
+  color: var(--text-light);
+  font-family: 'Crimson Text', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Stone texture background (pure CSS)
+   ═══════════════════════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(60, 45, 25, 0.4) 0%, transparent 70%),
+    radial-gradient(ellipse at 80% 20%, rgba(50, 35, 20, 0.3) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 80%, rgba(40, 30, 18, 0.3) 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-darkest) 0%, #12100c 50%, var(--bg-darkest) 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Main Layout
+   ═══════════════════════════════════════════════════════════ */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Header — ornamental stone bar
+   ═══════════════════════════════════════════════════════════ */
+.header {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 18px 20px 14px;
+  background: linear-gradient(180deg, var(--stone-mid) 0%, var(--stone-dark) 100%);
+  border-bottom: 2px solid var(--gold-dark);
+  position: relative;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.header h1 {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--gold-bright);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 20px rgba(201, 168, 76, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.header .subtitle {
+  font-family: 'Crimson Text', serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+}
+
+/* Ornamental diamonds */
+.header .ornament {
+  display: inline-block;
+  margin: 0 12px;
+  color: var(--gold-dark);
+  font-size: 0.6rem;
+  vertical-align: middle;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Chat Area
+   ═══════════════════════════════════════════════════════════ */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px;
+  scroll-behavior: smooth;
+
+  /* Dark vignette edges */
+  background:
+    linear-gradient(180deg, rgba(10,8,6,0.5) 0%, transparent 4%),
+    linear-gradient(0deg, rgba(10,8,6,0.5) 0%, transparent 4%);
+}
+
+/* Scrollbar — stone style */
+.chat-area::-webkit-scrollbar { width: 8px; }
+.chat-area::-webkit-scrollbar-track { background: var(--bg-dark); }
+.chat-area::-webkit-scrollbar-thumb {
+  background: var(--stone-mid);
+  border-radius: 4px;
+  border: 1px solid var(--stone-dark);
+}
+.chat-area::-webkit-scrollbar-thumb:hover { background: var(--stone-light); }
+
+/* ═══════════════════════════════════════════════════════════
+   Messages
+   ═══════════════════════════════════════════════════════════ */
+.message {
+  max-width: 85%;
+  margin-bottom: 16px;
+  animation: fadeSlideIn 0.35s ease-out;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* — Player message — */
+.message.user {
+  margin-left: auto;
+}
+
+.message.user .bubble {
+  background: linear-gradient(135deg, var(--stone-mid) 0%, var(--stone-dark) 100%);
+  border: 1px solid var(--stone-light);
+  border-radius: 12px 12px 2px 12px;
+  padding: 10px 16px;
+  color: var(--text-light);
+}
+
+.message.user .sender {
+  text-align: right;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* — Archiviste message — */
+.message.assistant {
+  margin-right: auto;
+}
+
+.message.assistant .bubble {
+  background: linear-gradient(135deg, #1c1608 0%, #14100a 100%);
+  border: 1px solid var(--gold-dark);
+  border-left: 3px solid var(--gold);
+  border-radius: 12px 12px 12px 2px;
+  padding: 12px 16px;
+  color: var(--parchment);
+  position: relative;
+}
+
+.message.assistant .bubble::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent 80%);
+}
+
+.message.assistant .sender {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.message.assistant .sender::before {
+  content: '📜';
+  font-size: 0.8rem;
+}
+
+/* Markdown-like formatting in responses */
+.bubble p { margin-bottom: 0.5em; }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble strong, .bubble b { color: var(--gold-bright); font-weight: 600; }
+.bubble em, .bubble i { color: var(--parchment-light); }
+.bubble ul, .bubble ol { padding-left: 1.2em; margin: 0.4em 0; }
+.bubble li { margin-bottom: 0.2em; }
+.bubble code {
+  font-family: monospace;
+  background: rgba(0,0,0,0.3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  color: var(--gold-bright);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Verbose — Tool Steps
+   ═══════════════════════════════════════════════════════════ */
+.tool-steps {
+  margin-top: 10px;
+  border-top: 1px solid rgba(139, 105, 20, 0.3);
+  padding-top: 8px;
+}
+
+.tool-steps-toggle {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Crimson Text', serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  transition: color 0.2s;
+}
+
+.tool-steps-toggle:hover { color: var(--gold); }
+
+.tool-steps-toggle .arrow {
+  display: inline-block;
+  transition: transform 0.2s;
+  font-size: 0.6rem;
+}
+
+.tool-steps-toggle.open .arrow {
+  transform: rotate(90deg);
+}
+
+.tool-steps-content {
+  display: none;
+  margin-top: 6px;
+}
+
+.tool-steps-content.open {
+  display: block;
+  animation: fadeSlideIn 0.25s ease-out;
+}
+
+.tool-step {
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 2px solid var(--stone-light);
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.tool-step .tool-name {
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tool-step .tool-args {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--parchment-dark);
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.elapsed-time {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Typing indicator
+   ═══════════════════════════════════════════════════════════ */
+.typing-indicator {
+  display: none;
+  max-width: 85%;
+  margin-bottom: 16px;
+}
+
+.typing-indicator.visible {
+  display: block;
+  animation: fadeSlideIn 0.3s ease-out;
+}
+
+.typing-dots {
+  background: linear-gradient(135deg, #1c1608, #14100a);
+  border: 1px solid var(--gold-dark);
+  border-left: 3px solid var(--gold);
+  border-radius: 12px 12px 12px 2px;
+  padding: 12px 20px;
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.typing-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: typingBounce 1.4s infinite ease-in-out;
+  opacity: 0.4;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+.typing-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Input Area — stone bar at bottom
+   ═══════════════════════════════════════════════════════════ */
+.input-area {
+  flex-shrink: 0;
+  background: linear-gradient(0deg, var(--stone-dark) 0%, var(--stone-mid) 100%);
+  border-top: 2px solid var(--gold-dark);
+  padding: 14px 16px;
+  position: relative;
+}
+
+.input-area::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.input-row textarea {
+  flex: 1;
+  resize: none;
+  background: var(--bg-panel);
+  border: 1px solid var(--stone-light);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--parchment-light);
+  font-family: 'Crimson Text', serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  min-height: 44px;
+  max-height: 120px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-row textarea::placeholder {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.input-row textarea:focus {
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 0 1px var(--gold-dark), inset 0 0 12px rgba(0,0,0,0.3);
+}
+
+.send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--gold-dark);
+  background: linear-gradient(180deg, var(--stone-mid) 0%, var(--stone-dark) 100%);
+  color: var(--gold);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--stone-light) 0%, var(--stone-mid) 100%);
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(201, 168, 76, 0.2);
+}
+
+.send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.send-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Welcome message
+   ═══════════════════════════════════════════════════════════ */
+.welcome {
+  text-align: center;
+  padding: 40px 20px;
+  animation: fadeSlideIn 0.6s ease-out;
+}
+
+.welcome-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  filter: grayscale(0.3);
+}
+
+.welcome h2 {
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: var(--gold-bright);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.welcome p {
+  color: var(--text-dim);
+  max-width: 480px;
+  margin: 0 auto 16px;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+.welcome-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.hint-btn {
+  background: var(--bg-panel);
+  border: 1px solid var(--stone-light);
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: var(--parchment-dark);
+  font-family: 'Crimson Text', serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hint-btn:hover {
+  border-color: var(--gold-dark);
+  color: var(--gold-bright);
+  background: var(--bg-panel-hover);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Footer status
+   ═══════════════════════════════════════════════════════════ */
+.status-bar {
+  text-align: center;
+  padding: 4px;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  background: var(--bg-darkest);
+  font-family: 'Cinzel', serif;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green-dim);
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.status-dot.error { background: var(--red-accent); }
+
+/* ═══════════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .message { max-width: 92%; }
+  .header h1 { font-size: 1.2rem; letter-spacing: 0.1em; }
+  .welcome-hints { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+
+<body>
+<div class="app-container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>
+      <span class="ornament">◆</span>
+      L'Archiviste
+      <span class="ornament">◆</span>
+    </h1>
+    <div class="subtitle">Gardien des Chroniques — Conteur des Temps Anciens</div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-area" id="chatArea">
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">📖</div>
+      <h2>Bienvenue, voyageur</h2>
+      <p>
+        Ah… encore une âme curieuse qui vient troubler la poussière de mes registres.
+        Soit. Je me souviens de cette histoire — chaque lame tirée, chaque serment prononcé,
+        chaque ombre dans la nuit. Pose tes questions, mais ne me demande pas qui je suis.
+        Seule l'histoire compte.
+      </p>
+      <div class="welcome-hints">
+        <button class="hint-btn" onclick="sendHint(this)">Raconte-moi cette histoire depuis le début</button>
+        <button class="hint-btn" onclick="sendHint(this)">Qui est Thalantyr ?</button>
+        <button class="hint-btn" onclick="sendHint(this)">Quels combats ont marqué cette épopée ?</button>
+        <button class="hint-btn" onclick="sendHint(this)">Que s'est-il passé lors de la troisième journée ?</button>
+      </div>
+    </div>
+
+    <!-- Typing indicator -->
+    <div class="typing-indicator" id="typing">
+      <div class="typing-label">Il fouille dans ses registres…</div>
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <div class="input-row">
+      <textarea
+        id="questionInput"
+        placeholder="Posez votre question à l'Archiviste…"
+        rows="1"
+        autofocus
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="send()" title="Envoyer">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">Connexion…</span>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// App Logic
+// ═══════════════════════════════════════════════════════════
+
+const chatArea = document.getElementById('chatArea');
+const input = document.getElementById('questionInput');
+const sendBtn = document.getElementById('sendBtn');
+const typing = document.getElementById('typing');
+const welcome = document.getElementById('welcome');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+
+let isLoading = false;
+
+// ── Auto-resize textarea ──
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+});
+
+// ── Enter to send (Shift+Enter for newline) ──
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+
+// ── Health check ──
+async function checkHealth() {
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    statusDot.classList.remove('error');
+    statusText.textContent =
+      `En ligne — ${data.events} événements, ${data.entities} entités en mémoire`;
+  } catch {
+    statusDot.classList.add('error');
+    statusText.textContent = 'Hors ligne — vérifiez le serveur';
+  }
+}
+checkHealth();
+setInterval(checkHealth, 30000);
+
+// ── Hint buttons ──
+function sendHint(btn) {
+  input.value = btn.textContent;
+  send();
+}
+
+// ── Format response text (basic markdown) ──
+function formatText(text) {
+  // Escape HTML
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Bold: **text** or __text__
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+  // Italic: *text* or _text_
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  // Bullet lists
+  html = html.replace(/^[\s]*[-*•]\s+(.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/gs, (match) => '<ul>' + match + '</ul>');
+
+  // Paragraphs
+  html = html.replace(/\n{2,}/g, '</p><p>');
+  html = '<p>' + html + '</p>';
+  html = html.replace(/<p>\s*<\/p>/g, '');
+
+  return html;
+}
+
+// ── Create tool steps HTML ──
+function buildToolStepsHTML(steps, elapsed, correction) {
+  if ((!steps || steps.length === 0) && !correction) return '';
+
+  const correctionHTML = correction
+    ? `<div class="tool-step">
+        <div class="tool-name">✎ Correction orthographique</div>
+        <div class="tool-args">« ${escapeHTML(correction.original)} » → « ${escapeHTML(correction.corrected)} »</div>
+      </div>`
+    : '';
+
+  const stepsHTML = (steps || []).map(s => {
+    const argsStr = Object.entries(s.arguments)
+      .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
+      .join(', ');
+    return `
+      <div class="tool-step">
+        <div class="tool-name">⚙ ${s.tool_name}</div>
+        <div class="tool-args">${argsStr}</div>
+      </div>`;
+  }).join('');
+
+  const totalItems = (steps ? steps.length : 0) + (correction ? 1 : 0);
+  const id = 'steps-' + Date.now();
+  return `
+    <div class="tool-steps">
+      <button class="tool-steps-toggle" onclick="toggleSteps('${id}', this)">
+        <span class="arrow">▶</span>
+        ${totalItems} étape${totalItems > 1 ? 's' : ''}
+      </button>
+      <div class="tool-steps-content" id="${id}">
+        ${correctionHTML}
+        ${stepsHTML}
+      </div>
+      <div class="elapsed-time">Réponse en ${elapsed}s</div>
+    </div>`;
+}
+
+function toggleSteps(id, btn) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
+// ── Add message to chat ──
+function addMessage(role, content, steps = null, elapsed = null, correction = null) {
+  // Hide welcome on first message
+  if (welcome) welcome.style.display = 'none';
+
+  const msg = document.createElement('div');
+  msg.className = `message ${role}`;
+
+  const sender = role === 'user' ? 'Aventurier' : "L'Archiviste";
+  const bubbleContent = role === 'user' ? escapeHTML(content) : formatText(content);
+  const toolsHTML = (role === 'assistant' && (steps || correction)) ? buildToolStepsHTML(steps, elapsed, correction) : '';
+
+  msg.innerHTML = `
+    <div class="sender">${sender}</div>
+    <div class="bubble">${bubbleContent}${toolsHTML}</div>
+  `;
+
+  // Insert before typing indicator
+  chatArea.insertBefore(msg, typing);
+  scrollToBottom();
+}
+
+function escapeHTML(text) {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+}
+
+function scrollToBottom() {
+  requestAnimationFrame(() => {
+    chatArea.scrollTop = chatArea.scrollHeight;
+  });
+}
+
+// ── Send question ──
+async function send() {
+  const question = input.value.trim();
+  if (!question || isLoading) return;
+
+  isLoading = true;
+  sendBtn.disabled = true;
+  input.value = '';
+  input.style.height = 'auto';
+
+  addMessage('user', question);
+
+  // Show typing
+  typing.classList.add('visible');
+  scrollToBottom();
+
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Erreur ${res.status}`);
+    }
+
+    const data = await res.json();
+    typing.classList.remove('visible');
+
+    // Correction orthographique détectée ?
+    const correction = data.corrected_question
+      ? { original: data.original_question, corrected: data.corrected_question }
+      : null;
+
+    addMessage('assistant', data.answer, data.steps, data.elapsed, correction);
+
+  } catch (err) {
+    typing.classList.remove('visible');
+    addMessage(
+      'assistant',
+      `*Les pages de mes registres se brouillent…* Une ombre perturbe ma mémoire : ${err.message}. Laisse-moi un instant, puis repose ta question.`
+    );
+  } finally {
+    isLoading = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+</script>
+
+</body>
+</html>
